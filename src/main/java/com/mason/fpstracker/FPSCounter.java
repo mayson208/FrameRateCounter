@@ -1,0 +1,24 @@
+package com.mason.fpstracker;
+
+public class FPSCounter {
+
+    private int frames = 0;
+    private int fps = 0;
+    private long lastTime = System.nanoTime();
+
+    public void frame() {
+        frames++;
+
+        long now = System.nanoTime();
+
+        if (now - lastTime >= 1_000_000_000L) {
+            fps = frames;
+            frames = 0;
+            lastTime = now;
+        }
+    }
+
+    public int getFPS() {
+        return fps;
+    }
+}

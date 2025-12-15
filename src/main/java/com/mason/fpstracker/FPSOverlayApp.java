@@ -1,5 +1,6 @@
 package com.mason.fpstracker;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -13,10 +14,10 @@ public class FPSOverlayApp extends Application {
     @Override
     public void start(Stage stage) {
 
-        Label label = new Label("FPS Tracker Starting...");
-        label.setTextFill(Color.LIME);
+        Label fpsLabel = new Label("THIS IS THE CORRECT FILE");
+        fpsLabel.setTextFill(Color.LIME);
 
-        VBox root = new VBox(label);
+        VBox root = new VBox(fpsLabel);
         root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
         root.setSpacing(10);
 
@@ -29,6 +30,13 @@ public class FPSOverlayApp extends Application {
         stage.setX(20);
         stage.setY(20);
         stage.show();
+
+        new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                fpsLabel.setText("NOW: " + now);
+            }
+        }.start();
     }
 
     public static void main(String[] args) {
