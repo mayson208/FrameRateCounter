@@ -14,12 +14,19 @@ public class FPSOverlayApp extends Application {
     @Override
     public void start(Stage stage) {
 
-        Label fpsLabel = new Label("THIS IS THE CORRECT FILE");
-        fpsLabel.setTextFill(Color.LIME);
+        FPSCounter fpsCounter = new FPSCounter();
 
-        VBox root = new VBox(fpsLabel);
+        Label fpsLabel = new Label("FPS: 0");
+        Label cpuLabel = new Label("CPU: 0%");
+        Label ramLabel = new Label("RAM: 0 MB");
+
+        fpsLabel.setTextFill(Color.LIME);
+        cpuLabel.setTextFill(Color.LIME);
+        ramLabel.setTextFill(Color.LIME);
+
+        VBox root = new VBox(fpsLabel, cpuLabel, ramLabel);
+        root.setSpacing(8);
         root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
-        root.setSpacing(10);
 
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
@@ -34,7 +41,18 @@ public class FPSOverlayApp extends Application {
         new AnimationTimer() {
             @Override
             public void handle(long now) {
-                fpsLabel.setText("NOW: " + now);
+
+      
+                fpsCounter.frame();
+                fpsLabel.setText("FPS: " + fpsCounter.getFPS());
+
+          
+                double cpu = SystemStats.getCpuUsage();
+                cpuLabel.setText(String.format("CPU: %.1f%%", cpu));
+
+             
+                double ram = SystemStats.getUsedMemoryMB();
+                ramLabel.setText(String.format("RAM: %.0f MB", ram));
             }
         }.start();
     }
