@@ -13,6 +13,8 @@ import javafx.stage.StageStyle;
 public class FPSOverlayApp extends Application {
 
     private boolean darkMode = true;
+    private double offsetX;
+    private double offsetY;
 
     @Override
     public void start(Stage stage) {
@@ -37,7 +39,16 @@ public class FPSOverlayApp extends Application {
         stage.setY(20);
         stage.show();
 
-        // Toggle dark mode with D key
+        root.setOnMousePressed(event -> {
+            offsetX = event.getSceneX();
+            offsetY = event.getSceneY();
+        });
+
+        root.setOnMouseDragged(event -> {
+            stage.setX(event.getScreenX() - offsetX);
+            stage.setY(event.getScreenY() - offsetY);
+        });
+
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.D) {
                 darkMode = !darkMode;
@@ -52,30 +63,23 @@ public class FPSOverlayApp extends Application {
         new AnimationTimer() {
             @Override
             public void handle(long now) {
-
                 fpsCounter.frame();
                 fpsLabel.setText("FPS: " + fpsCounter.getFPS());
-
-                cpuLabel.setText(
-                        String.format("CPU: %.1f%%", SystemStats.getCpuUsage())
-                );
-
-                ramLabel.setText(
-                        String.format("RAM: %.0f MB", SystemStats.getUsedMemoryMB())
-                );
+                cpuLabel.setText(String.format("CPU: %.1f%%", SystemStats.getCpuUsage()));
+                ramLabel.setText(String.format("RAM: %.0f MB", SystemStats.getUsedMemoryMB()));
             }
         }.start();
     }
 
     private void applyDarkMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
+        root.setStyle("-fx-background-color: rgba(0,0,0,0.6); -fx-padding: 10;");
         for (Label label : labels) {
             label.setTextFill(Color.LIME);
         }
     }
 
     private void applyLightMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(255,255,255,0.85);");
+        root.setStyle("-fx-background-color: rgba(255,255,255,0.85); -fx-padding: 10;");
         for (Label label : labels) {
             label.setTextFill(Color.BLACK);
         }
