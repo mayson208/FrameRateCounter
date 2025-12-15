@@ -4,12 +4,15 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 public class FPSOverlayApp extends Application {
+
+    private boolean darkMode = true;
 
     @Override
     public void start(Stage stage) {
@@ -20,13 +23,9 @@ public class FPSOverlayApp extends Application {
         Label cpuLabel = new Label("CPU: 0%");
         Label ramLabel = new Label("RAM: 0 MB");
 
-        fpsLabel.setTextFill(Color.LIME);
-        cpuLabel.setTextFill(Color.LIME);
-        ramLabel.setTextFill(Color.LIME);
+        VBox root = new VBox(8, fpsLabel, cpuLabel, ramLabel);
 
-        VBox root = new VBox(fpsLabel, cpuLabel, ramLabel);
-        root.setSpacing(8);
-        root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
+        applyDarkMode(root, fpsLabel, cpuLabel, ramLabel);
 
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
@@ -38,23 +37,48 @@ public class FPSOverlayApp extends Application {
         stage.setY(20);
         stage.show();
 
+        // Toggle dark mode with D key
+        scene.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.D) {
+                darkMode = !darkMode;
+                if (darkMode) {
+                    applyDarkMode(root, fpsLabel, cpuLabel, ramLabel);
+                } else {
+                    applyLightMode(root, fpsLabel, cpuLabel, ramLabel);
+                }
+            }
+        });
+
         new AnimationTimer() {
             @Override
             public void handle(long now) {
 
-      
                 fpsCounter.frame();
                 fpsLabel.setText("FPS: " + fpsCounter.getFPS());
 
-          
-                double cpu = SystemStats.getCpuUsage();
-                cpuLabel.setText(String.format("CPU: %.1f%%", cpu));
+                cpuLabel.setText(
+                        String.format("CPU: %.1f%%", SystemStats.getCpuUsage())
+                );
 
-             
-                double ram = SystemStats.getUsedMemoryMB();
-                ramLabel.setText(String.format("RAM: %.0f MB", ram));
+                ramLabel.setText(
+                        String.format("RAM: %.0f MB", SystemStats.getUsedMemoryMB())
+                );
             }
         }.start();
+    }
+
+    private void applyDarkMode(VBox root, Label... labels) {
+        root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
+        for (Label label : labels) {
+            label.setTextFill(Color.LIME);
+        }
+    }
+
+    private void applyLightMode(VBox root, Label... labels) {
+        root.setStyle("-fx-background-color: rgba(255,255,255,0.85);");
+        for (Label label : labels) {
+            label.setTextFill(Color.BLACK);
+        }
     }
 
     public static void main(String[] args) {
