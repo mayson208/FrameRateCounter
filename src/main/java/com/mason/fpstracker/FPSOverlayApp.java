@@ -13,6 +13,7 @@ import javafx.stage.StageStyle;
 public class FPSOverlayApp extends Application {
 
     private boolean darkMode = true;
+    private boolean visible = true;
     private double offsetX;
     private double offsetY;
 
@@ -50,6 +51,7 @@ public class FPSOverlayApp extends Application {
         });
 
         scene.setOnKeyPressed(event -> {
+
             if (event.getCode() == KeyCode.D) {
                 darkMode = !darkMode;
                 if (darkMode) {
@@ -57,6 +59,12 @@ public class FPSOverlayApp extends Application {
                 } else {
                     applyLightMode(root, fpsLabel, cpuLabel, ramLabel);
                 }
+            }
+
+            if (event.getCode() == KeyCode.H) {
+                visible = !visible;
+                root.setVisible(visible);
+                root.setManaged(visible);
             }
         });
 
@@ -72,14 +80,14 @@ public class FPSOverlayApp extends Application {
     }
 
     private void applyDarkMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(0,0,0,0.6); -fx-padding: 10;");
+        root.setStyle("-fx-background-color: rgba(0,0,0,0.6); -fx-padding: 10; -fx-background-radius: 12;");
         for (Label label : labels) {
             label.setTextFill(Color.LIME);
         }
     }
 
     private void applyLightMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(255,255,255,0.85); -fx-padding: 10;");
+        root.setStyle("-fx-background-color: rgba(255,255,255,0.85); -fx-padding: 10; -fx-background-radius: 12;");
         for (Label label : labels) {
             label.setTextFill(Color.BLACK);
         }
