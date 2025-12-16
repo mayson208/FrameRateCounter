@@ -30,16 +30,28 @@ public class FPSOverlayApp extends Application {
 
         FPSCounter fpsCounter = new FPSCounter();
 
+        Label titleLabel = new Label("Performance Monitor");
         Label fpsLabel = new Label("FPS: 0");
+        Label avgFpsLabel = new Label("AVG FPS: 0");
+        Label frameLabel = new Label("Frame: 0 ms");
         Label cpuLabel = new Label("CPU: 0%");
         Label ramLabel = new Label("RAM: 0 MB");
 
         Canvas graphCanvas = new Canvas(180, 60);
         GraphicsContext gc = graphCanvas.getGraphicsContext2D();
 
-        VBox root = new VBox(8, fpsLabel, cpuLabel, ramLabel, graphCanvas);
+        VBox root = new VBox(
+                6,
+                titleLabel,
+                fpsLabel,
+                avgFpsLabel,
+                frameLabel,
+                cpuLabel,
+                ramLabel,
+                graphCanvas
+        );
 
-        applyDarkMode(root, fpsLabel, cpuLabel, ramLabel);
+        applyDarkMode(root, titleLabel, fpsLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel);
 
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
@@ -66,9 +78,9 @@ public class FPSOverlayApp extends Application {
             if (event.getCode() == KeyCode.D) {
                 darkMode = !darkMode;
                 if (darkMode) {
-                    applyDarkMode(root, fpsLabel, cpuLabel, ramLabel);
+                    applyDarkMode(root, titleLabel, fpsLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel);
                 } else {
-                    applyLightMode(root, fpsLabel, cpuLabel, ramLabel);
+                    applyLightMode(root, titleLabel, fpsLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel);
                 }
             }
 
@@ -87,10 +99,12 @@ public class FPSOverlayApp extends Application {
                 int fps = fpsCounter.getFPS();
 
                 fpsLabel.setText("FPS: " + fps);
+                frameLabel.setText(String.format("Frame: %.2f ms", fpsCounter.getFrameTimeMs()));
                 cpuLabel.setText(String.format("CPU: %.1f%%", SystemStats.getCpuUsage()));
                 ramLabel.setText(String.format("RAM: %.0f MB", SystemStats.getUsedMemoryMB()));
 
                 updateHistory(fps);
+                avgFpsLabel.setText("AVG FPS: " + calculateAverage());
                 drawGraph(gc, graphCanvas.getWidth(), graphCanvas.getHeight());
             }
         }.start();
@@ -103,6 +117,17 @@ public class FPSOverlayApp extends Application {
         fpsHistory.add(fps);
     }
 
+    private int calculateAverage() {
+        if (fpsHistory.isEmpty()) {
+            return 0;
+        }
+        int sum = 0;
+        for (int v : fpsHistory) {
+            sum += v;
+        }
+        return sum / fpsHistory.size();
+    }
+
     private void drawGraph(GraphicsContext gc, double width, double height) {
 
         gc.clearRect(0, 0, width, height);
@@ -111,9 +136,7 @@ public class FPSOverlayApp extends Application {
             return;
         }
 
-        int maxFps = fpsHistory.stream().max(Integer::compareTo).orElse(60);
-        maxFps = Math.max(maxFps, 60);
-
+        int maxFps = Math.max(60, fpsHistory.stream().max(Integer::compareTo).orElse(60));
         double xStep = width / (MAX_HISTORY - 1);
 
         gc.setStroke(darkMode ? Color.LIME : Color.DARKGREEN);
@@ -131,14 +154,14 @@ public class FPSOverlayApp extends Application {
     }
 
     private void applyDarkMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(0,0,0,0.6); -fx-padding: 10; -fx-background-radius: 12;");
+        root.setStyle("-fx-background-color: rgba(0,0,0,0.65); -fx-padding: 12; -fx-background-radius: 12;");
         for (Label label : labels) {
             label.setTextFill(Color.LIME);
         }
     }
 
     private void applyLightMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(255,255,255,0.85); -fx-padding: 10; -fx-background-radius: 12;");
+        root.setStyle("-fx-background-color: rgba(255,255,255,0.9); -fx-padding: 12; -fx-background-radius: 12;");
         for (Label label : labels) {
             label.setTextFill(Color.BLACK);
         }
