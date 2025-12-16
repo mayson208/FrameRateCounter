@@ -5,11 +5,16 @@ public class FPSCounter {
     private int frames = 0;
     private int fps = 0;
     private long lastTime = System.nanoTime();
+    private long lastFrameTime = System.nanoTime();
+    private double frameTimeMs = 0;
 
     public void frame() {
-        frames++;
-
         long now = System.nanoTime();
+
+        frameTimeMs = (now - lastFrameTime) / 1_000_000.0;
+        lastFrameTime = now;
+
+        frames++;
 
         if (now - lastTime >= 1_000_000_000L) {
             fps = frames;
@@ -20,5 +25,9 @@ public class FPSCounter {
 
     public int getFPS() {
         return fps;
+    }
+
+    public double getFrameTimeMs() {
+        return frameTimeMs;
     }
 }
