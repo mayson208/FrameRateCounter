@@ -27,3 +27,5 @@ Designed as a simple always-on-top HUD with a clean interface and minimal setup.
 ## How to Run
 ```bash
 mvn clean javafx:run
+
+Hope you enjoy!
