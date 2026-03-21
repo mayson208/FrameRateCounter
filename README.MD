@@ -1,31 +1,31 @@
-# FPS Tracker Overlay
+# FPS & Performance Monitor
 
-A lightweight JavaFX desktop overlay that displays real-time performance metrics, including FPS, CPU usage, and memory usage.  
-Designed as a simple always-on-top HUD with a clean interface and minimal setup.
+A transparent always-on-top JavaFX overlay that tracks FPS, CPU, RAM, and session stats in real time — with a live colour-coded graph.
+
+![Java](https://img.shields.io/badge/Java-21-blue) ![JavaFX](https://img.shields.io/badge/JavaFX-21-orange)
 
 ## Features
-- Real-time FPS tracking using a JavaFX animation loop
-- Live CPU usage monitoring
-- Live RAM usage display
-- Always-on-top transparent overlay window
-- Draggable window positioning
-- Runtime dark and light mode toggle
 
-## Tech Stack
-- Java 21
-- JavaFX
-- Maven
+- **Live FPS** with green / yellow / red colour coding (≥60 / ≥30 / <30)
+- **Min, Max, and Rolling Average** FPS tracked across the session
+- **Frame time** in milliseconds
+- **CPU usage** via `OperatingSystemMXBean`
+- **RAM** — used / total in GB
+- **Session timer** — elapsed time displayed as MM:SS
+- **Live graph** with per-segment colour coding, 60fps baseline, and dashed average line
+- **Dark / Light theme** toggle with `[D]`
+- **Hide / Show** with `[H]`
+- **Reset stats** (min/max/history) with `[R]`
+- **Drag to reposition** anywhere on screen
+- Transparent borderless window, always on top
 
-## Controls
-- Click and drag anywhere on the overlay to move it
-- Press **D** to toggle between dark and light mode
+## Running
 
-## Notes
-- FPS represents the frame rate of the overlay itself, not external games or applications
-- The project does not hook into other processes or system graphics APIs
-
-## How to Run
 ```bash
-mvn clean javafx:run
+mvn javafx:run
+```
 
-Hope you enjoy!
+## Requirements
+
+- Java 21+
+- Maven 3.9+
