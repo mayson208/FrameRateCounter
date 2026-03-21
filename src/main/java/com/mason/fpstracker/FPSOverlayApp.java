@@ -25,33 +25,42 @@ public class FPSOverlayApp extends Application {
     private final List<Integer> fpsHistory = new ArrayList<>();
     private static final int MAX_HISTORY = 60;
 
+    // FPS thresholds for color coding
+    private static final int FPS_GOOD  = 60;
+    private static final int FPS_OK    = 30;
+
     @Override
     public void start(Stage stage) {
 
         FPSCounter fpsCounter = new FPSCounter();
 
-        Label titleLabel = new Label("Performance Monitor");
-        Label fpsLabel = new Label("FPS: 0");
-        Label avgFpsLabel = new Label("AVG FPS: 0");
-        Label frameLabel = new Label("Frame: 0 ms");
-        Label cpuLabel = new Label("CPU: 0%");
-        Label ramLabel = new Label("RAM: 0 MB");
+        Label titleLabel  = new Label("Performance Monitor");
+        Label fpsLabel    = new Label("FPS: —");
+        Label avgFpsLabel = new Label("AVG: —");
+        Label frameLabel  = new Label("Frame: — ms");
+        Label cpuLabel    = new Label("CPU: —%");
+        Label ramLabel    = new Label("RAM: — / —");
+        Label hintLabel   = new Label("[D] theme  [H] hide");
 
-        Canvas graphCanvas = new Canvas(180, 60);
+        titleLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+        fpsLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        hintLabel.setStyle("-fx-font-size: 9px;");
+
+        Canvas graphCanvas = new Canvas(190, 50);
         GraphicsContext gc = graphCanvas.getGraphicsContext2D();
 
-        VBox root = new VBox(
-                6,
+        VBox root = new VBox(4,
                 titleLabel,
                 fpsLabel,
                 avgFpsLabel,
                 frameLabel,
                 cpuLabel,
                 ramLabel,
-                graphCanvas
+                graphCanvas,
+                hintLabel
         );
 
-        applyDarkMode(root, titleLabel, fpsLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel);
+        applyTheme(root, darkMode, titleLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel, hintLabel);
 
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
@@ -59,32 +68,23 @@ public class FPSOverlayApp extends Application {
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setAlwaysOnTop(true);
         stage.setScene(scene);
+        stage.setTitle("Performance Monitor");
         stage.setX(20);
         stage.setY(20);
         stage.show();
 
-        root.setOnMousePressed(event -> {
-            offsetX = event.getSceneX();
-            offsetY = event.getSceneY();
+        root.setOnMousePressed(e -> { offsetX = e.getSceneX(); offsetY = e.getSceneY(); });
+        root.setOnMouseDragged(e -> {
+            stage.setX(e.getScreenX() - offsetX);
+            stage.setY(e.getScreenY() - offsetY);
         });
 
-        root.setOnMouseDragged(event -> {
-            stage.setX(event.getScreenX() - offsetX);
-            stage.setY(event.getScreenY() - offsetY);
-        });
-
-        scene.setOnKeyPressed(event -> {
-
-            if (event.getCode() == KeyCode.D) {
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.D) {
                 darkMode = !darkMode;
-                if (darkMode) {
-                    applyDarkMode(root, titleLabel, fpsLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel);
-                } else {
-                    applyLightMode(root, titleLabel, fpsLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel);
-                }
+                applyTheme(root, darkMode, titleLabel, avgFpsLabel, frameLabel, cpuLabel, ramLabel, hintLabel);
             }
-
-            if (event.getCode() == KeyCode.H) {
+            if (e.getCode() == KeyCode.H) {
                 visible = !visible;
                 root.setVisible(visible);
                 root.setManaged(visible);
@@ -94,76 +94,82 @@ public class FPSOverlayApp extends Application {
         new AnimationTimer() {
             @Override
             public void handle(long now) {
-
                 fpsCounter.frame();
                 int fps = fpsCounter.getFPS();
 
+                // Color-code FPS: green ≥ 60, yellow ≥ 30, red < 30
+                Color fpsColor;
+                if (fps >= FPS_GOOD)      fpsColor = darkMode ? Color.LIME      : Color.web("#22c55e");
+                else if (fps >= FPS_OK)   fpsColor = darkMode ? Color.YELLOW    : Color.web("#eab308");
+                else                       fpsColor = darkMode ? Color.ORANGERED : Color.web("#ef4444");
+
                 fpsLabel.setText("FPS: " + fps);
+                fpsLabel.setTextFill(fpsColor);
+
                 frameLabel.setText(String.format("Frame: %.2f ms", fpsCounter.getFrameTimeMs()));
-                cpuLabel.setText(String.format("CPU: %.1f%%", SystemStats.getCpuUsage()));
-                ramLabel.setText(String.format("RAM: %.0f MB", SystemStats.getUsedMemoryMB()));
+                cpuLabel.setText(String.format("CPU:   %.1f%%", SystemStats.getCpuUsage()));
+
+                double usedGB  = SystemStats.getUsedMemoryMB() / 1024.0;
+                double totalGB = SystemStats.getTotalMemoryGB();
+                ramLabel.setText(String.format("RAM:   %.1f / %.1fGB", usedGB, totalGB));
 
                 updateHistory(fps);
-                avgFpsLabel.setText("AVG FPS: " + calculateAverage());
+                avgFpsLabel.setText("AVG: " + calculateAverage() + " fps");
                 drawGraph(gc, graphCanvas.getWidth(), graphCanvas.getHeight());
             }
         }.start();
     }
 
     private void updateHistory(int fps) {
-        if (fpsHistory.size() >= MAX_HISTORY) {
-            fpsHistory.remove(0);
-        }
+        if (fpsHistory.size() >= MAX_HISTORY) fpsHistory.remove(0);
         fpsHistory.add(fps);
     }
 
     private int calculateAverage() {
-        if (fpsHistory.isEmpty()) {
-            return 0;
-        }
-        int sum = 0;
-        for (int v : fpsHistory) {
-            sum += v;
-        }
-        return sum / fpsHistory.size();
+        if (fpsHistory.isEmpty()) return 0;
+        return (int) fpsHistory.stream().mapToInt(i -> i).average().orElse(0);
     }
 
     private void drawGraph(GraphicsContext gc, double width, double height) {
-
         gc.clearRect(0, 0, width, height);
+        if (fpsHistory.size() < 2) return;
 
-        if (fpsHistory.size() < 2) {
-            return;
-        }
-
-        int maxFps = Math.max(60, fpsHistory.stream().max(Integer::compareTo).orElse(60));
+        int maxFps = Math.max(FPS_GOOD, fpsHistory.stream().max(Integer::compareTo).orElse(FPS_GOOD));
         double xStep = width / (MAX_HISTORY - 1);
 
-        gc.setStroke(darkMode ? Color.LIME : Color.DARKGREEN);
-        gc.setLineWidth(2);
+        // Draw baseline at 60 fps
+        double baselineY = height - (FPS_GOOD / (double) maxFps) * height;
+        gc.setStroke(darkMode ? Color.gray(0.35) : Color.gray(0.65));
+        gc.setLineWidth(1);
+        gc.strokeLine(0, baselineY, width, baselineY);
 
+        gc.setLineWidth(1.8);
         for (int i = 1; i < fpsHistory.size(); i++) {
+            int f1 = fpsHistory.get(i - 1);
+            int f2 = fpsHistory.get(i);
             double x1 = (i - 1) * xStep;
-            double y1 = height - (fpsHistory.get(i - 1) / (double) maxFps) * height;
-
+            double y1 = height - (f1 / (double) maxFps) * height;
             double x2 = i * xStep;
-            double y2 = height - (fpsHistory.get(i) / (double) maxFps) * height;
+            double y2 = height - (f2 / (double) maxFps) * height;
 
+            // Per-segment color
+            Color seg = f2 >= FPS_GOOD
+                    ? (darkMode ? Color.LIME : Color.web("#22c55e"))
+                    : f2 >= FPS_OK
+                        ? (darkMode ? Color.YELLOW : Color.web("#eab308"))
+                        : (darkMode ? Color.ORANGERED : Color.web("#ef4444"));
+            gc.setStroke(seg);
             gc.strokeLine(x1, y1, x2, y2);
         }
     }
 
-    private void applyDarkMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(0,0,0,0.65); -fx-padding: 12; -fx-background-radius: 12;");
-        for (Label label : labels) {
-            label.setTextFill(Color.LIME);
-        }
-    }
-
-    private void applyLightMode(VBox root, Label... labels) {
-        root.setStyle("-fx-background-color: rgba(255,255,255,0.9); -fx-padding: 12; -fx-background-radius: 12;");
-        for (Label label : labels) {
-            label.setTextFill(Color.BLACK);
+    private void applyTheme(VBox root, boolean dark, Label... labels) {
+        if (dark) {
+            root.setStyle("-fx-background-color: rgba(0,0,0,0.72); -fx-padding: 12; -fx-background-radius: 12;");
+            for (Label l : labels) l.setTextFill(Color.web("#d4d4d4"));
+        } else {
+            root.setStyle("-fx-background-color: rgba(255,255,255,0.92); -fx-padding: 12; -fx-background-radius: 12;");
+            for (Label l : labels) l.setTextFill(Color.web("#1a1a1a"));
         }
     }
 
